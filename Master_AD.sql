@@ -189,8 +189,9 @@ on CONCAT(a.MERCHANDISE_KEY,A.FISCAL_YEAR,A.FISCAL_WEEK)=CONCAT(D.MERCHANDISE_KE
 
 left join MD_TAKEN_FINAL e  ---------------MD_TAKEN--------------------
 on A.MERCHANDISE_KEY=E.MERCHANDISE_KEY 
-and CAST(a.fiscal_year AS int)=cast(e.year_start as int)
-AND cast(A.FISCAL_WEEK as int) BETWEEN cast(E.WEEK_START as int) AND cast(E.CHNGD_WEEK_END as int)
+AND cast(concat(a.fiscal_year,case when len(a.FISCAL_WEEK)=1 then concat('0',a.FISCAL_WEEK) else a.FISCAL_WEEK end) as bigint) between 
+cast(concat(E.year_start,case when len(E.week_start)=1 then concat('0',E.week_start) else E.week_start end) as bigint)
+and cast(concat(E.year_end,case when len(E.chngd_week_end)=1 then concat('0',E.chngd_week_end) else E.chngd_week_end end) as bigint)
 
 LEFT JOIN (SELECT *,
 			CASE WHEN max_promo_desc=min_promo_desc THEN max_promo_desc
