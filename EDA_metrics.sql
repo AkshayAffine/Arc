@@ -145,3 +145,29 @@ from
 left join [Macro_level_data_weekly_level] b
 on a.FISCAL_YEAR=b.FISCAL_YEAR and a.FISCAL_WEEK=b.FISCAL_WEEK
 ORDER BY a.FISCAL_YEAR,a.FISCAL_WEEK,dept_desc
+
+--Transposing
+select fiscal_year,fiscal_week,dept_desc,measure,measure_value
+from EDA_Metrics_dept a
+unpivot
+(measure_value for measure in 
+	(SALES,
+REVENUE,
+UNIT_COST_WEIGHT,
+CURRENT_RETAIL_WEIGHT,
+FULL_PRICE_WEIGHT,
+PROMO_PRICE_WEIGHT,
+PRICE_POINT_WEIGHT,
+RETURNS_1,
+MARK_UP_WEIGHT,
+NEW_LOWER_PRICE_WEIGHT,
+DISTINCT_PRODUCTS_SOLD,
+promo_discount,
+md_discount,
+[Average Temp (°C)],
+[Rain],
+[GDP (In Millions)],
+[% Change in inflation],
+[Weekly earnings whole industry in pounds],
+[Weekly earnings Retail industry in pounds]
+) )as unpvt

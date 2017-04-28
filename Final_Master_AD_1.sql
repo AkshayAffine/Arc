@@ -16,6 +16,9 @@ CURRENT_RETAIL,
 CURRENT_INVENTORY_PRICE,
 UNIT_COST,
 FULL_PRICE,
+case when PROMO_PRICE is not null then PROMO_PRICE
+		when PROMO_PRICE is null and price_point is not null then PRICE_POINT
+		else CURRENT_RETAIL end Final_price,
 PROMO_PRICE,
 PROMO_DESC,
 PRICE_POINT,
