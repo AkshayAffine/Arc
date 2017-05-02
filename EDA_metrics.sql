@@ -1,6 +1,6 @@
 
 -----------------=============================== At Overall Level ====================================-------------------------------
-Drop table EDA_metrics
+Drop table EDA_metrics;
 
 select a.*,[Average Temp (°C)],[Rain],[GDP (In Millions)],[% Change in inflation],[Weekly earnings whole industry in pounds]
 	,[Weekly earnings Retail industry in pounds]
@@ -20,11 +20,11 @@ from
 		SUM(B.GROSS_SALES_UNITS-B.NET_SALES_UNITS) AS RETURNS_1,
 		SUM(B.MARK_UP*B.GROSS_SALES_UNITS)*1.0/SUM(B.GROSS_SALES_UNITS) AS MARK_UP_WEIGHT,
 		SUM(B.NEW_LOWER_PRICE*B.GROSS_SALES_UNITS)*1.0/SUM(B.GROSS_SALES_UNITS) AS NEW_LOWER_PRICE_WEIGHT,
-		COUNT(DISTINCT B.MERCHANDISE_KEY) AS DISTINCT_PRODUCTS_SOLD,
+		count(distinct (case when GROSS_SALES_UNITS>0 then MERCHANDISE_KEY end)) AS DISTINCT_PRODUCTS_SOLD,
 		((SUM(case when promo_price is not null then B.MD_PRICE*B.GROSS_SALES_UNITS end)*1.0/SUM(B.GROSS_SALES_UNITS))-(SUM(B.PROMO_PRICE*B.GROSS_SALES_UNITS)*1.0/SUM(B.GROSS_SALES_UNITS)))*100.0/
 		(SUM(case when promo_price is not null then B.MD_PRICE*B.GROSS_SALES_UNITS end)*1.0/SUM(B.GROSS_SALES_UNITS)) promo_discount,
-		((SUM(case when price_point is not null then B.MD_PRICE*B.GROSS_SALES_UNITS end)*1.0/SUM(B.GROSS_SALES_UNITS))-(SUM(B.PRICE_Point*B.GROSS_SALES_UNITS)*1.0/SUM(B.GROSS_SALES_UNITS)))*100.0/
-		(SUM(case when price_point is not null then B.MD_PRICE*B.GROSS_SALES_UNITS end)*1.0/SUM(B.GROSS_SALES_UNITS)) md_discount
+		((SUM(case when price_point is not null then B.Regular_Price*B.GROSS_SALES_UNITS end)*1.0/SUM(B.GROSS_SALES_UNITS))-(SUM(B.PRICE_Point*B.GROSS_SALES_UNITS)*1.0/SUM(B.GROSS_SALES_UNITS)))*100.0/
+		(SUM(case when price_point is not null then B.Regular_Price*B.GROSS_SALES_UNITS end)*1.0/SUM(B.GROSS_SALES_UNITS)) md_discount
 	FROM
 	(      
 	   SELECT A.*,
@@ -47,7 +47,8 @@ from
 		  CAST(FULL_PRICE AS DECIMAL(38,5)) AS FULL_PRICE,
 		  CAST(PROMO_PRICE AS DECIMAL(38,5)) AS PROMO_PRICE,
 		  CAST(PRICE_POINT AS DECIMAL(38,5)) AS PRICE_POINT,
-		  CAST(MD_PRICE AS DECIMAL(38,5)) AS MD_PRICE
+		  CAST(MD_PRICE AS DECIMAL(38,5)) AS MD_PRICE,
+		  CAST(Regular_Price as DECIMAL(38,5)) AS Regular_Price
 		  FROM [dbo].[FINAL_MASTER_AD_1]
 		  WHERE MERCHANDISE_KEY IS NOT NULL
 	   )A     
@@ -86,7 +87,9 @@ md_discount,
 [GDP (In Millions)],
 [% Change in inflation],
 [Weekly earnings whole industry in pounds],
-[Weekly earnings Retail industry in pounds]
+[Weekly earnings Retail industry in pounds],
+National_Events,
+Public_Holidays
 ) )as unpvt
 
 
@@ -94,7 +97,7 @@ md_discount,
 
 
 --------====================== At Dept level ===============--------------------------------------
-Drop table EDA_Metrics_dept
+Drop table EDA_Metrics_dept;
 
 select a.*,[Average Temp (°C)],[Rain],[GDP (In Millions)],[% Change in inflation],[Weekly earnings whole industry in pounds]
 	,[Weekly earnings Retail industry in pounds]
@@ -112,15 +115,15 @@ from
 		SUM(B.GROSS_SALES_UNITS-B.NET_SALES_UNITS) AS RETURNS_1,
 		SUM(B.MARK_UP*B.GROSS_SALES_UNITS)*1.0/(case when SUM(B.GROSS_SALES_UNITS)=0 then 1 else SUM(B.GROSS_SALES_UNITS) end) AS MARK_UP_WEIGHT,
 		SUM(B.NEW_LOWER_PRICE*B.GROSS_SALES_UNITS)*1.0/(case when SUM(B.GROSS_SALES_UNITS)=0 then 1 else SUM(B.GROSS_SALES_UNITS) end) AS NEW_LOWER_PRICE_WEIGHT,
-		COUNT(DISTINCT B.MERCHANDISE_KEY) AS DISTINCT_PRODUCTS_SOLD,
+		count(distinct (case when GROSS_SALES_UNITS>0 then MERCHANDISE_KEY end)) AS DISTINCT_PRODUCTS_SOLD,
 		((SUM(case when promo_price is not null then B.MD_PRICE*B.GROSS_SALES_UNITS end)*1.0/(case when SUM(B.GROSS_SALES_UNITS)=0 then 1 else SUM(B.GROSS_SALES_UNITS) end))
 			-(SUM(B.PROMO_PRICE*B.GROSS_SALES_UNITS)*1.0/(case when SUM(B.GROSS_SALES_UNITS)=0 then 1 else SUM(B.GROSS_SALES_UNITS) end)))*100.0/
 		(case when (SUM(case when promo_price is not null then B.MD_PRICE*B.GROSS_SALES_UNITS end)*1.0/SUM(B.GROSS_SALES_UNITS))=0 then 1
 			else (SUM(case when promo_price is not null then B.MD_PRICE*B.GROSS_SALES_UNITS end)*1.0/SUM(B.GROSS_SALES_UNITS)) end) promo_discount,
-		((SUM(case when price_point is not null then B.MD_PRICE*B.GROSS_SALES_UNITS end)*1.0/(case when SUM(B.GROSS_SALES_UNITS)=0 then 1 else SUM(B.GROSS_SALES_UNITS) end))
+		((SUM(case when price_point is not null then B.Regular_Price*B.GROSS_SALES_UNITS end)*1.0/(case when SUM(B.GROSS_SALES_UNITS)=0 then 1 else SUM(B.GROSS_SALES_UNITS) end))
 			-(SUM(B.PRICE_Point*B.GROSS_SALES_UNITS)*1.0/(case when SUM(B.GROSS_SALES_UNITS)=0 then 1 else SUM(B.GROSS_SALES_UNITS) end)))*100.0/
-		(case when (SUM(case when price_point is not null then B.MD_PRICE*B.GROSS_SALES_UNITS end)*1.0/SUM(B.GROSS_SALES_UNITS))=0 then 1
-			else (SUM(case when price_point is not null then B.MD_PRICE*B.GROSS_SALES_UNITS end)*1.0/SUM(B.GROSS_SALES_UNITS)) end) md_discount
+		(case when (SUM(case when price_point is not null then B.Regular_Price*B.GROSS_SALES_UNITS end)*1.0/SUM(B.GROSS_SALES_UNITS))=0 then 1
+			else (SUM(case when price_point is not null then B.Regular_Price*B.GROSS_SALES_UNITS end)*1.0/SUM(B.GROSS_SALES_UNITS)) end) md_discount
 	FROM
 	(      
 	   SELECT A.*,
@@ -143,7 +146,8 @@ from
 		  CAST(FULL_PRICE AS DECIMAL(38,5)) AS FULL_PRICE,
 		  CAST(PROMO_PRICE AS DECIMAL(38,5)) AS PROMO_PRICE,
 		  CAST(PRICE_POINT AS DECIMAL(38,5)) AS PRICE_POINT,
-		  CAST(MD_PRICE AS DECIMAL(38,5)) AS MD_PRICE
+		  CAST(MD_PRICE AS DECIMAL(38,5)) AS MD_PRICE,
+		  CAST(Regular_Price as DECIMAL(38,5)) AS Regular_Price
 		  FROM [dbo].[FINAL_MASTER_AD_1]
 		  WHERE MERCHANDISE_KEY IS NOT NULL
 	   )A     
