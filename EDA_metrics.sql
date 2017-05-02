@@ -188,3 +188,45 @@ md_discount,
 [Weekly earnings whole industry in pounds],
 [Weekly earnings Retail industry in pounds]
 ) )as unpvt
+
+
+---===============EDA: Year Level
+select a.*
+from
+	(SELECT B.FISCAL_YEAR,dept_desc,
+		SUM(B.FULL_PRICE*B.GROSS_SALES_UNITS)*1.0/(case when SUM(B.GROSS_SALES_UNITS)=0 then 1 else SUM(B.GROSS_SALES_UNITS) end) AS FULL_PRICE_WEIGHT,
+		SUM(B.Final_Price*B.GROSS_SALES_UNITS)*1.0/(case when SUM(B.GROSS_SALES_UNITS)=0 then 1 else SUM(B.GROSS_SALES_UNITS) end) AS FINAL_PRICE_WEIGHT
+		,		((SUM(case when price_point is not null then B.Regular_Price*B.GROSS_SALES_UNITS end)*1.0/(case when SUM(B.GROSS_SALES_UNITS)=0 then 1 else SUM(B.GROSS_SALES_UNITS) end))
+			-(SUM(B.PRICE_Point*B.GROSS_SALES_UNITS)*1.0/(case when SUM(B.GROSS_SALES_UNITS)=0 then 1 else SUM(B.GROSS_SALES_UNITS) end)))*100.0/
+		(case when (SUM(case when price_point is not null then B.Regular_Price*B.GROSS_SALES_UNITS end)*1.0/SUM(B.GROSS_SALES_UNITS))=0 then 1
+			else (SUM(case when price_point is not null then B.Regular_Price*B.GROSS_SALES_UNITS end)*1.0/SUM(B.GROSS_SALES_UNITS)) end) md_discount
+	FROM
+	(      
+	   SELECT A.*
+	   FROM 
+	   (
+		 SELECT MERCHANDISE_KEY,
+		  cat_desc,
+		  dept_desc,
+		  line_key,
+		  FISCAL_YEAR,
+		  FISCAL_WEEK,
+		  CAST(GROSS_SALES_UNITS AS DECIMAL(38,5)) AS GROSS_SALES_UNITS,
+		  CAST(GROSS_SALES_DOLLARS AS DECIMAL(38,5)) AS GROSS_SALES_DOLLARS,
+		  CAST(NET_SALES_DOLLARS AS DECIMAL(38,5)) AS NET_SALES_DOLLARS,
+		  CAST(NET_SALES_UNITS AS DECIMAL(38,5)) AS NET_SALES_UNITS,
+		  CAST(CURRENT_RETAIL AS DECIMAL(38,5)) AS CURRENT_RETAIL,
+		  CAST(UNIT_COST AS DECIMAL(38,5)) AS UNIT_COST,
+		  CAST(FULL_PRICE AS DECIMAL(38,5)) AS FULL_PRICE,
+		  CAST(Final_Price AS DECIMAL(38,5)) AS Final_Price,
+		  CAST(PROMO_PRICE AS DECIMAL(38,5)) AS PROMO_PRICE,
+		  CAST(PRICE_POINT AS DECIMAL(38,5)) AS PRICE_POINT,
+		  CAST(MD_PRICE AS DECIMAL(38,5)) AS MD_PRICE,
+		  CAST(Regular_Price as DECIMAL(38,5)) AS Regular_Price
+		  FROM [dbo].[FINAL_MASTER_AD_1]
+		  WHERE MERCHANDISE_KEY IS NOT NULL
+	   )A     
+	)B
+	GROUP BY B.FISCAL_YEAR,dept_desc
+	)a
+ORDER BY a.FISCAL_YEAR,dept_desc
