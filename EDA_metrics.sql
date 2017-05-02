@@ -1,7 +1,11 @@
 
 -----------------=============================== At Overall Level ====================================-------------------------------
+Drop table EDA_metrics
+
 select a.*,[Average Temp (°C)],[Rain],[GDP (In Millions)],[% Change in inflation],[Weekly earnings whole industry in pounds]
 	,[Weekly earnings Retail industry in pounds]
+	,[National Events] as National_Events
+	,[Public Holidays] as Public_Holidays
 into EDA_Metrics
 from
 	(SELECT B.FISCAL_YEAR,B.FISCAL_WEEK,
@@ -52,6 +56,8 @@ from
 	)a
 left join [Macro_level_data_weekly_level] b
 on a.FISCAL_YEAR=b.FISCAL_YEAR and a.FISCAL_WEEK=b.FISCAL_WEEK
+left join Holidays c
+on a.FISCAL_YEAR=c.FISCAL_YEAR and a.FISCAL_WEEK=c.FISCAL_WEEK
 ORDER BY a.FISCAL_YEAR,a.FISCAL_WEEK
 
 
@@ -88,6 +94,8 @@ md_discount,
 
 
 --------====================== At Dept level ===============--------------------------------------
+Drop table EDA_Metrics_dept
+
 select a.*,[Average Temp (°C)],[Rain],[GDP (In Millions)],[% Change in inflation],[Weekly earnings whole industry in pounds]
 	,[Weekly earnings Retail industry in pounds]
 into EDA_Metrics_dept
