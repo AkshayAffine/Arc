@@ -128,3 +128,32 @@ from
 		EOP_DC_On_Order_Units
 	from FINAL_MASTER_TABLE
 	) a
+	
+	
+	
+	
+	
+----------Final_Master_AD_2
+
+
+select *
+		,case when no_wk_business>cnt then    ---Launch date calculation
+				concat(left(max_period,4)-(floor((no_wk_business-right(max_period,2))*1.0/52.0)+1)
+						,floor(52-(52*(((no_wk_business-right(max_period,2))*1.0/52.0)-(floor((no_wk_business-right(max_period,2))*1.0/52.0))))))
+			when no_wk_business<=cnt then min(concat(FISCAL_YEAR,case when len(fiscal_week)=1 then 0 end,fiscal_week)) over(partition by merchandise_key)
+		end launch_date
+		---MD flag for first and furhter
+		,case when md_taken_flag=1 and coalesce(PROMO_PRICE,0)<>Final_price then 'First'
+			when md_taken_flag>1 and inventory>((max(case when md_taken_flag=1 and base_md=1 then inventory+net_sales_units end) over(partition by merchandise_key))*0.02) then 'Further'
+			end MD_FLag
+into final_master_AD_2
+from
+(
+select distinct *,coalesce(EOP_DC_Inventory_Units,0) + coalesce(EOP_INVENTORY_UNITS,0) + coalesce(EOP_ON_ORDER_UNITS,0) inventory
+	,count(*) over(partition by merchandise_key) cnt	
+	,ROW_NUMBER() over(partition by merchandise_key order by fiscal_year,fiscal_week) no_sales_wk	
+	,max(concat(FISCAL_YEAR,case when len(fiscal_week)=1 then 0 end,fiscal_week)) over(partition by merchandise_key) max_period
+	,row_number() over(partition by merchandise_key,md_taken_flag order by fiscal_year,fiscal_week) base_md
+from Final_master_AD_1		
+)a
+order by FISCAL_YEAR,FISCAL_WEEK
