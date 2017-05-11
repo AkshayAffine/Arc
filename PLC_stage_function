@@ -1,0 +1,37 @@
+### Function to calculate PLC stages ###
+
+PLC_stage <- function(data = dt, y_variable, x_variable) {
+  
+  # Input : 
+            # data - Dataframe containing variables like Age, Sell through & Cumulative Sell through
+            # y_variable - Dependent variable of the equation to determine PLC
+            # x_variable - Independent variable of the equation to determine PLC
+            
+  # Output : An array including the three stages of PLC            
+            
+  data <- data  
+  y <- as.numeric(data[,y_variable])
+  x <- as.numeric(data[,x_variable])
+  y <- y[1:length(y)-1]
+  x<- x[2:length(x)]
+  x2 <- x*x
+  x3 <- x2*x
+  
+  mod_reg <- lm(y~x+x2)
+  coeff <- as.numeric(mod_reg$coefficients)
+  a <- coeff[1]
+  b1 <- coeff[2]
+  b2 <- coeff[3]
+  b3 <- ifelse(is.na(coeff[4]),0,coeff[4])
+  x_new <- seq(0.00,max(x),by = 0.005)
+  y_new <- mod_reg$fitted.values
+  slp <- diff(y_new)/diff(x_new)
+  infl1 <- which(slp == max(slp[slp<=0.07]))
+  infl2 <- which(slp == min(slp[slp>=-0.07]))
+  stage <- "M"
+  stage <- ifelse(data[,x_variable] <= x_new[infl1], "G", stage)
+  stage <- ifelse(data[,x_variable] >= x_new[infl2], "D", stage)
+  return(stage)
+  
+  }
+
