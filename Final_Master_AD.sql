@@ -139,7 +139,8 @@ from
 select *
 		,case when no_wk_business>cnt then    ---Launch date calculation
 				concat(left(max_period,4)-(floor((no_wk_business-right(max_period,2))*1.0/52.0)+1)
-						,floor(52-(52*(((no_wk_business-right(max_period,2))*1.0/52.0)-(floor((no_wk_business-right(max_period,2))*1.0/52.0))))))
+						,concat(case when len(floor(52-(52*(((no_wk_business-right(max_period,2))*1.0/52.0)-(floor((no_wk_business-right(max_period,2))*1.0/52.0))))))=1 then '0' end,floor(52-(52*(((no_wk_business-right(max_period,2))*1.0/52.0)-
+		(floor((no_wk_business-right(max_period,2))*1.0/52.0)))))))
 			when no_wk_business<=cnt then min(concat(FISCAL_YEAR,case when len(fiscal_week)=1 then 0 end,fiscal_week)) over(partition by merchandise_key)
 		end launch_date
 		---MD flag for first and furhter
