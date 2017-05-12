@@ -1,0 +1,30 @@
+select a.fiscal_year,a.fiscal_week,a.Period
+			,b.MERCHANDISE_KEY
+			,b.Cat_key,sum(coalesce(c.GROSS_SALES_UNITS,0))
+	from
+		(
+		select EOP_CALENDAR_DATE
+				,cast(FISCAL_YEAR as int) as fiscal_year
+				,cast(FISCAL_WEEK as int) as fiscal_week
+			   ,row_number() over (order by cast(FISCAL_YEAR as int),cast(FISCAL_WEEK as int)) as Period
+		from [dbo].[cal]
+		where cast(FISCAL_YEAR as int) < 2016
+			  or (cast(FISCAL_YEAR as int) = 2016 and cast(FISCAL_WEEK as int) < 33)
+		) A
+	cross join
+		(
+		select distinct merchandise_key,cat_key,Cat_Desc,line_desc
+		from [dbo].[Final_master_AD_1]
+		where merchandise_key is not null
+		) B
+	left join
+		(
+		select *
+		from [dbo].[Final_master_AD_1]
+		where merchandise_key is not null
+		) C
+	on A.fiscal_year = C.FISCAL_YEAR
+		and A.fiscal_week = C.FISCAL_WEEK
+		and B.MERCHANDISE_KEY = C.MERCHANDISE_KEY
+ group by a.fiscal_year,a.fiscal_week,a.Period,b.MERCHANDISE_KEY,b.Cat_key
+			
