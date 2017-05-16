@@ -26,7 +26,7 @@ from
 (
 select *,
 avg(return_rate) over(partition by dept_desc,cat_key,cat_desc,fiscal_year order by fiscal_week
-                      rows 13 preceding) as pred_ma_13
+                      rows between 13 preceding and 1 preceding) as pred_ma_13
  from RETURN_RATE_15_weeks
  ) a
  where fiscal_week in (31,32)
