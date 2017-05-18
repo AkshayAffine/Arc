@@ -1,0 +1,62 @@
+
+--- Code to calculate Age for PLC calculation ---
+
+--- Create table with Current Yr-Week concatenated field ---
+
+drop table Master_AD_plc;
+
+select Merchandise_key, cat_key, Net_sales_units as Sales, inventory as Inv, 
+case when LEN(Fiscal_week) = 2 then CONCAT(Fiscal_year,Fiscal_week)
+when LEN(Fiscal_week) = 1 then CONCAT(Fiscal_year,'0',Fiscal_week) end as Yr_wk, launch_date
+,Fiscal_year, Fiscal_week
+into Master_AD_plc
+from final_master_AD_2
+where launch_date > 201400;
+
+--- Create table with week with 1st Sales at product level ---
+
+drop table Master_AD_plc2;
+
+select a.*, b.Sales_1wk
+into Master_AD_plc2
+from Master_AD_plc a
+left join
+(Select Merchandise_key, min(cast(Yr_wk as int)) as Sales_1wk
+from Master_AD_plc
+where Sales <> 0
+group by Merchandise_key) b
+on a.MERCHANDISE_KEY = b.MERCHANDISE_KEY
+order by merchandise_key, cast(FISCAL_YEAR as int) asc, cast(FISCAL_WEEK as int) asc 
+;
+
+--- Create table with final launch date (if there is sales before launch date take sales 1st week)  ---
+
+drop table Master_AD_plc3;
+
+select *, case
+when Sales_1wk < launch_date then Sales_1wk
+else launch_date end as final_launch_date  
+into Master_AD_plc3
+from Master_AD_plc2
+order by merchandise_key, cast(FISCAL_YEAR as int) asc, cast(FISCAL_WEEK as int) asc;
+
+--- Create table with Age field ---
+
+drop table Master_AD_plc4;
+
+Select *, case 
+when abs(cast(left(Yr_wk,4) as int) - cast(left(final_launch_date,4) as int)) = 0 then Yr_wk - final_launch_date
+when abs(cast(left(Yr_wk,4) as int) - cast(left(final_launch_date,4) as int)) = 1 then Yr_wk - final_launch_date - 48
+when abs(cast(left(Yr_wk,4) as int) - cast(left(final_launch_date,4) as int)) = 2 then Yr_wk - final_launch_date - 96
+end as age
+into Master_AD_plc4
+from Master_AD_plc3;
+
+--- Roll up at Category level ---
+
+drop table Master_AD_plc5;
+
+select cat_key, age, sum(sales) as sales, sum(Inv) as inv
+into Master_AD_plc5
+from Master_AD_plc4
+group by cat_key, age;
