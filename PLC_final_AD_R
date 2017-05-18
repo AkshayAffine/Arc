@@ -1,0 +1,36 @@
+### R code to create the final input data for PLC calculation ---
+
+library(dplyr)
+
+# Import using excel clipbaord 
+
+dt <- read.table("clipboard-1024", sep="\t", header=T)
+
+# Create dataframe with all category and all periods 
+
+dist_cat <- data.frame(unique(dt$cat_key))
+nperiod <- data.frame(id=0:135)
+dt0 <- merge(dist_cat, nperiod, by=NULL)
+names(dt0) <- c("cat_key", "age")
+
+# Merge with the input data so that we have all period rows  
+
+dt1 <- merge(dt0,dt,by = c("cat_key", "age"),all.x = T)
+dt1$sales[is.na(dt1$sales)] <- 0
+
+# Calculate Cumulative sales, last period Inventory & Total sales at Category level 
+
+dt1 <- dt1 %>% group_by(cat_key) %>% mutate(csales = cumsum(sales), tot_sales = sum(sales))
+dt.inv <- dt1 %>% filter(!is.na(inv)) %>% group_by(cat_key) %>% summarise(max_age = max(age))
+dt2 <- merge(dt1, dt.inv, by=("cat_key"), all.x=T)  
+dt3 <- dt2[dt2$age == dt2$max_age & !is.na(dt2$inv),]
+dt4 <- merge(dt2,dt3[,c("cat_key","inv")],by="cat_key",all.x=T)
+
+# Final CST and Initial inventory calculation 
+
+dt4$initial_inv = dt4$tot_sales + dt4$inv.y
+dt4$CST <-  dt4$csales / dt4$initial_inv
+
+# Export as csv 
+
+write.csv(dt4, "PLC_final.csv", row.names=F)
